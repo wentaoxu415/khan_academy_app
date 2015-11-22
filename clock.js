@@ -7,6 +7,13 @@ var dim = {
     min_hand: 80
 };
 
+var loc = {
+    hour_x: dim.center_x,
+    hour_y: dim.center_y + dim.hour_hand,
+    min_x: dim.center_x,
+    min_y: dim.center_y - dim.min_hand
+};
+
 var time = {
     hour: 6,
     tenth_min: 0,
@@ -49,38 +56,76 @@ var isClickInButton = function(x, y, button){
     return false;
 };
 
-var handleMouse = function(){
+var getHourHandAngle = function(){
+    var hourHandAngle = 30*(time.hour) + 0.5*(time.tenth_min*10 + time.oneth_min);
+    return hourHandAngle;
+};
+
+var getMinHandAngle = function(){
+    var minHandAngle = 6*(time.tenth_min*10 + time.oneth_min); 
+    return minHandAngle;
+};
+
+var getUpdatedX = function(hand_length, angle){
+    return dim.center_x + sin(angle)*hand_length;
+};
+
+var getUpdatedY = function(hand_length, angle){
+    return dim.center_y - cos(angle)*hand_length;
+};
+
+var updateHourHand = function(){
+    var hourHandAngle = getHourHandAngle();
+    loc.hour_x = getUpdatedX(dim.hour_hand, hourHandAngle);
+    loc.hour_y = getUpdatedY(dim.hour_hand, hourHandAngle);
+};
+
+var updateMinHand = function(){
+    var hourHandAngle = getHourHandAngle();
+    var minHandAngle = getMinHandAngle();
+    loc.hour_x = getUpdatedX(dim.hour_hand, hourHandAngle);
+    loc.hour_y = getUpdatedY(dim.hour_hand, hourHandAngle);
+    loc.min_x = getUpdatedX(dim.min_hand, minHandAngle);
+    loc.min_y = getUpdatedY(dim.min_hand, minHandAngle);
+};
+
+var updateTime = function(){
     mouseClicked = function(){
         var x = mouseX;
         var y = mouseY;
         if (isClickInButton(x, y, HourUpButton)){
             time.hour = ((time.hour + 1) % 12);
+            updateHourHand();
         }
         else if (isClickInButton(x, y, HourDownButton)){
-            time.hour = (time.hour > 0 ? time.hour - 1 : 11) ;
+            time.hour = (time.hour > 0 ? time.hour - 1 : 11);
+            updateHourHand();
         }
         else if (isClickInButton(x, y, TenthMinUpButton)){
             time.tenth_min = (time.tenth_min + 1) % 6;   
+            updateMinHand();
         }
         else if (isClickInButton(x, y, TenthMinDownButton)){
             time.tenth_min = (time.tenth_min > 0 ? time.tenth_min - 1 : 5);
+            updateMinHand();
         }
         else if (isClickInButton(x, y, OnethMinUpButton)){
             time.oneth_min = (time.oneth_min + 1) % 10;
+            updateMinHand();
         }
         else if (isClickInButton(x, y, OnethMinDownButton)){
             time.oneth_min = (time.oneth_min > 0 ? time.oneth_min - 1 : 9);
+            updateMinHand();
         }
     };
 };
 
-
 var TimeBoxes = function(){
     fill(255, 255, 255);
-    rect(70, 30, 50, 50);
-    rect(130, 30, 50, 50);
-    rect(220, 30, 50, 50);
-    rect(280, 30, 50, 50);
+    rect(70, 30, 50, 50, 5);
+    rect(130, 30, 50, 50, 5);
+    rect(220, 30, 50, 50, 5);
+    rect(280, 30, 50, 50, 5);
 };
 
 var TimeColons = function(){
@@ -129,36 +174,152 @@ var drawControl = function(){
 
 var ClockHourHand = function(){
     strokeWeight(5);
-    line(dim.center_x, dim.center_y, dim.center_x, dim.center_y+dim.hour_hand);
+    line(dim.center_x, dim.center_y, loc.hour_x, loc.hour_y);
 };
 
 var ClockMinHand = function(){
     strokeWeight(3);
-    line(dim.center_x, dim.center_y, dim.center_x, dim.center_y-dim.min_hand);
+    line(dim.center_x, dim.center_y, loc.min_x, loc.min_y);
 };
 
+var ClockHourArc = function(){
+    strokeWeight(1);
+    stroke(0, 21, 255);
+    noFill();
+    var angle = getHourHandAngle() - 90;
+    arc(dim.center_x, dim.center_y, dim.hour_hand, dim.hour_hand, -90, angle);  
+};
+
+var ClockMinArc = function(){
+    strokeWeight(1);
+    stroke(255, 0, 0);
+    noFill();
+    var angle = getMinHandAngle() - 90;
+    arc(dim.center_x, dim.center_y, dim.min_hand, dim.min_hand, -90, angle);  
+};
+
+var ClockDiffArc = function(){
+    var hour_angle, min_angle, initial_angle, final_angle;
+    strokeWeight(1);
+    stroke(0, 255, 166);
+    noFill();
+    hour_angle = getHourHandAngle() - 90;
+    min_angle = getMinHandAngle() - 90;
+    if (abs(hour_angle - min_angle) <= 180){
+        if (min_angle <= hour_angle){
+            initial_angle = min_angle;
+            final_angle = hour_angle;
+        }
+        else{
+            initial_angle = hour_angle;
+            final_angle = min_angle;
+        }
+    }
+    else{
+        if (min_angle < hour_angle){
+            initial_angle = hour_angle;
+            final_angle = min_angle + 360;
+        }
+        else{
+            initial_angle = min_angle;
+            final_angle = hour_angle + 360;
+        }
+    }
+    arc(dim.center_x, dim.center_y, dim.min_hand+20, dim.min_hand+20, initial_angle, final_angle);
+};
 var ClockCenter = function(){
     fill(0, 0, 0);
     ellipse(dim.center_x, dim.center_y, 10, 10);    
 };
 
 var ClockFrame = function(){
+    stroke(0, 0, 0);
     fill(255, 255, 255);
     ellipse(dim.center_x, dim.center_y, dim.diameter, dim.diameter);       
 };
 
+var ClockMarks = function(){
+    var i, angle, x, y;
+    textSize(12);
+    textAlign(CENTER, CENTER);
+    for(i = 1; i <= 12; i++){
+        angle = (30*i) % 360;
+        x = getUpdatedX(dim.radius - 10, angle);
+        y = getUpdatedY(dim.radius - 10, angle);        
+        text(i, x, y);
+    }
+};
 
+var ClockDottedLine = function(){
+    var i;
+    stroke(0, 0, 0);
+    for (i = dim.center_y - dim.radius; i < dim.center_y; i+=2){
+        point(dim.center_x, i);
+    }
+};
 var drawClock = function(){
     ClockFrame();
     ClockCenter();
     ClockHourHand();
     ClockMinHand();
+    ClockMarks();
+    ClockHourArc();
+    ClockMinArc();
+    ClockDiffArc();
+    ClockDottedLine();
+};
+
+var drawTable = function(){
+    fill(255, 0, 0);
+    rect(30, 320, 100, 20);
+    
+    fill(0, 34, 255);
+    rect(30, 340, 100, 20);  
+    
+    fill(0, 255, 242);
+    rect(30, 360, 100, 20);  
+    
+    fill(255, 255, 255);
+    rect(130, 320, 250, 20);
+    rect(130, 340, 250, 20);
+    rect(130, 360, 250, 20);    
+    
+    fill(255, 255, 255);
+    textSize(10);
+    textAlign(LEFT, CENTER);
+    text(" Minute Angle", 30, 320, 70, 20);
+    text(" Hour Angle", 30, 340, 70, 20);
+    textSize(8);
+    text(" Angle in Between", 30, 360, 70, 20);
+};
+
+var drawEquation = function(){
+    var min, min_angle, hour, hour_angle, diff;
+    min = time.tenth_min*10+time.oneth_min;
+    min_angle = getMinHandAngle();
+    hour = time.hour;
+    hour_angle = getHourHandAngle();
+    diff = abs(min_angle - hour_angle);
+    fill(0, 0, 0);
+    textSize(10);
+    textAlign(LEFT, CENTER);
+
+    text(" 6° x " + min + " minutes = " + min_angle+"°", 130, 320, 250, 20);  
+    text(" 30° x " + hour + " hours + 0.5° x " + min + " minutes = " + hour_angle +"°", 130, 340, 250, 20);
+        
+    text(" |"+ min_angle + "° - " + hour_angle+ "°| = " + diff + "°", 130, 360, 250, 20);
+};
+
+var drawAnswer = function(){
+    drawTable();
+    drawEquation();
 };
 
 var draw = function() {
-    background(255, 255, 200);
+    background(240, 240, 240);
     strokeWeight(1);
     drawControl();
     drawClock();
-    handleMouse();
+    drawAnswer();
+    updateTime();
 };
