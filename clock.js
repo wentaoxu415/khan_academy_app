@@ -378,8 +378,10 @@ var drawTutorial = function(){
 var draw = function() {
     background(240, 240, 240);
     strokeWeight(1);
-    drawControl();
     drawClock();
-    drawTutorial();
     handleClicks();
+    if (stateMap.current_step === 0){
+        drawControl();
+        drawTutorial();
+    }
 };
