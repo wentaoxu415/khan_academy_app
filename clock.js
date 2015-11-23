@@ -1,25 +1,37 @@
+
+
+//-------------------- BEGIN OBJECTS -----------------------------------------
+// dim object stores the values of element's dimensiom
 var dim = {
-    radius: 100,
-    diameter: 200, 
-    center_x: 200,
-    center_y: 210,
-    hour_hand: 60,
-    min_hand: 80
+    "radius": 90,
+    "diameter": 180, 
+    "center_x": 200,
+    "center_y": 190,
+    "hour_hand": 60,
+    "min_hand": 80
 };
 
+// loc object stores the value of each clock hand's location
 var loc = {
-    hour_x: dim.center_x,
-    hour_y: dim.center_y + dim.hour_hand,
-    min_x: dim.center_x,
-    min_y: dim.center_y - dim.min_hand
+    "hour_x": dim.center_x,
+    "hour_y": dim.center_y + dim.hour_hand,
+    "min_x": dim.center_x,
+    "min_y": dim.center_y - dim.min_hand
 };
 
+// time object stores the value of the user provided time
 var time = {
-    hour: 6,
-    tenth_min: 0,
-    oneth_min: 0
+    "hour": 6,
+    "tenth_min": 0,
+    "oneth_min": 0
+};
+
+var stateMap = {
+    "current_step": 1
 };
     
+//-------------------- BEGIN CLASS CONSTRUCTORS ------------------------------
+// Button is a constructor that creates Button class for time update
 var Button = function(x, y, w, h, direction){
     this.x = x;
     this.y = y;
@@ -28,11 +40,12 @@ var Button = function(x, y, w, h, direction){
     this.direction = direction;
 };
 
+// Button.draw() creates a button instance for time update
 Button.prototype.draw = function() {
     if (this.direction === 'UP'){
         fill(48, 163, 2);
     }
-    else {
+    else if (this.direction === 'DOWN'){
         fill(222, 20, 20);
     }
     rect(this.x, this.y, this.w, this.h, 5); 
@@ -42,13 +55,17 @@ Button.prototype.draw = function() {
     text(this.direction, this.x, this.y, this.w, this.h);
 };
 
-var HourUpButton = new Button(70, 5, 110, 20, 'UP');
-var HourDownButton = new Button(70, 85, 110, 20, 'DOWN');
-var TenthMinUpButton = new Button(220, 5, 50, 20, 'UP');
-var TenthMinDownButton = new Button(220, 85, 50, 20, 'DOWN');
-var OnethMinUpButton = new Button(280, 5, 50, 20, 'UP');
-var OnethMinDownButton = new Button(280, 85, 50, 20, 'DOWN');
+// Declare button instances for time update
+var HourUpButton = new Button(90, 5, 90, 20, 'UP');
+var HourDownButton = new Button(90, 75, 90, 20, 'DOWN');
+var TenthMinUpButton = new Button(220, 5, 40, 20, 'UP');
+var TenthMinDownButton = new Button(220, 75, 40, 20, 'DOWN');
+var OnethMinUpButton = new Button(270, 5, 40, 20, 'UP');
+var OnethMinDownButton = new Button(270, 75, 40, 20, 'DOWN');
+var next_button = new Button(350, 290, 40, 80, 'NEXT'); 
+var prev_button = new Button(50, 290, 40, 80, 'PREV');
 
+//--------------- BEGIN HELPER FUNCTIONS -------------------------------------
 var isClickInButton = function(x, y, button){
     if (x > button.x && x < (button.x + button.w) && y > button.y && y < (button.y + button.h     )){
        return true; 
@@ -89,7 +106,7 @@ var updateMinHand = function(){
     loc.min_y = getUpdatedY(dim.min_hand, minHandAngle);
 };
 
-var updateTime = function(){
+var handleClicks = function(){
     mouseClicked = function(){
         var x = mouseX;
         var y = mouseY;
@@ -117,44 +134,47 @@ var updateTime = function(){
             time.oneth_min = (time.oneth_min > 0 ? time.oneth_min - 1 : 9);
             updateMinHand();
         }
+        else if (isClickInButton(x, y, next_button)){
+            stateMap.current_step += 1;   
+        }
     };
 };
 
 var TimeBoxes = function(){
     fill(255, 255, 255);
-    rect(70, 30, 50, 50, 5);
-    rect(130, 30, 50, 50, 5);
-    rect(220, 30, 50, 50, 5);
-    rect(280, 30, 50, 50, 5);
+    rect(90, 30, 40, 40, 5);
+    rect(140, 30, 40, 40, 5);
+    rect(220, 30, 40, 40, 5);
+    rect(270, 30, 40, 40, 5);
 };
 
 var TimeColons = function(){
     fill(0, 0, 0);
-    ellipse(200, 40, 10, 10);
-    ellipse(200, 70, 10, 10);
+    ellipse(200, 40, 8, 8);
+    ellipse(200, 60, 8, 8);
 };
 
 var TimeTenthHourText = function(){
     textSize(24);
     textAlign(CENTER, CENTER);
-    text((time.hour >= 10 ? '1': '0'), 70, 30, 50, 50);
+    text((time.hour >= 10 ? '1': '0'), 90, 25, 40, 40);
 };
 var TimeOnethHourText = function(){
     textSize(24);
     textAlign(CENTER, CENTER);
-    text(time.hour % 10, 130, 30, 50, 50);
+    text(time.hour % 10, 140, 25, 40, 40);
 };
 
 var TimeTenthMinText = function(){
     textSize(24);
     textAlign(CENTER, CENTER);
-    text(time.tenth_min, 220, 30, 50, 50);  
+    text(time.tenth_min, 220, 25, 40, 40);  
 };
 
 var TimeOnethMinText = function(){
     textSize(24);
     textAlign(CENTER, CENTER);
-    text(time.oneth_min, 280, 30, 50, 50);  
+    text(time.oneth_min, 270, 25, 40, 40);  
 };
 
 var drawControl = function(){
@@ -257,6 +277,8 @@ var ClockDottedLine = function(){
         point(dim.center_x, i);
     }
 };
+
+//-------------------- BEGIN HELPER DRAW FUNCTION ----------------------------
 var drawClock = function(){
     ClockFrame();
     ClockCenter();
@@ -315,11 +337,49 @@ var drawAnswer = function(){
     drawEquation();
 };
 
+var message_object = {
+    1: "This tutorial will help you understand how to calculate the angles between the hands of a clock. Let's start our journey!",
+    2: "First, let's calculate the minute hand angle. We define the minute hand angle to be the angle between the minute hand and the 12 O'Clock mark.",
+    3: "Since there are 360 degrees in a circle and there are 60 minutes in one hour, each minute will move the minute hand by 360/60 or 6 degrees. ",
+    4: "Try changing the minutes on the clock above. You should see that for each minute that you change, the minute hand moves by 6 degree!",
+    5: "Next, let's calculate the hour hand angle. We define the hour hand angle to be the angle between the hour hand and the 12 O'Clock mark.",
+    6: "This is actually a little trickier problem since while the hour hand moves as the hour changes, the hour hand also moves as each minute changes",
+    7: "This means that the hour hand angle is composed of 2 parts: the part that is moved by changes in hour and another part that is moved by changes in minutes",
+    8: "Now, let's calculate the part of the hour hand angle that is moved by changes in hour. Since there are 12 hours in one cycle of the clock, each hour will move the hour hand by 360/12 or 30 degrees.  ",
+    9: "Then, let's calculate the part of the hour hand angle that is moved by changes in minutes. As we saw in previous step, one hour moves the hour hand by 30 degrees.",
+    10: "This also means that 60 minutes also moves the hour hand by 30 degrees. As a result, each minute will move the hour hand by 30/60 or 0.5 degrees.",
+    11: "In short, the hour hand can be expressed as the formula below \nhour hand angle = 30 x hour + 0.5 x minute ",
+    12: ""
+};
+
+var fill_color = function(color){
+    switch(color){
+        case "green":
+            return fill(0, 200, 100);
+    }
+};
+
+var drawTutorial = function(){
+  image(getImage("avatars/mr-pants-with-hat"), 5, 350, 30, 30);
+  fill(255, 255, 255);
+  rect(50, 290, 340, 80, 5);
+  
+  fill_color("green");
+  next_button.draw();
+  fill(0, 0, 0);
+  textAlign(LEFT, CENTER);
+  textSize(12);
+  text(message_object[stateMap.current_step], 100, 290, 250, 80);
+};
+
+
+
+//-------------------- BEGIN MAIN DRAW FUNCTION ------------------------------
 var draw = function() {
     background(240, 240, 240);
     strokeWeight(1);
     drawControl();
     drawClock();
-    drawAnswer();
-    updateTime();
+    drawTutorial();
+    handleClicks();
 };
