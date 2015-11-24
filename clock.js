@@ -14,23 +14,6 @@ var dim = {
 var stateMap = {
     "current_step": 0,
     "prev": 0,
-    // "needReset":{
-    //   "step_1": true,
-    //   "step_2": true,
-    //   "step_3": true,
-    //   "step_4": true,
-    //   "step_5": true,
-    //   "step_6": true,
-    //   "step_7": true,
-    //   "step_8": true,
-    //   "step_9": true,
-    //   "step_10": true,
-    //   "step_11": true,
-    //   "step_12": true,
-    //   "step_13": true,
-    //   "step_14": true,
-    //   "step_15": true,
-    // },
     "needReset": true,
     // time object stores the value of the user provided time
     "time": {
@@ -56,17 +39,19 @@ var message_object = {
     2: "First, let's calculate the minute hand angle. We define the minute hand angle to be the angle between the minute hand and the 12 O'Clock mark.",
     3: "Since there are 360 degrees in a circle and there are 60 minutes in one hour, each minute will move the minute hand by 360/60 or 6 degrees. ",
     4: "Try changing the minutes on the clock above. You should see that for each minute that you change, the minute hand moves by 6 degree!",
-    5: "Next, let's calculate the hour hand angle. We define the hour hand angle to be the angle between the hour hand and the 12 O'Clock mark.",
-    6: "This is actually a little trickier problem since while the hour hand moves as the hour changes, the hour hand also moves as each minute changes",
-    7: "This means that the hour hand angle is composed of 2 parts: the part that is moved by changes in hour and another part that is moved by changes in minutes",
-    8: "Now, let's calculate the part of the hour hand angle that is moved by changes in hour. Since there are 12 hours in one cycle of the clock, each hour will move the hour hand by 360/12 or 30 degrees.  ",
-    9: "Then, let's calculate the part of the hour hand angle that is moved by changes in minutes. As we saw in previous step, one hour moves the hour hand by 30 degrees.",
-    10: "This also means that 60 minutes also moves the hour hand by 30 degrees. As a result, each minute will move the hour hand by 30/60 or 0.5 degrees.",
-    11: "In short, the hour hand can be expressed as the formula below \nhour hand angle = 30 x hour + 0.5 x minute ",
-    12: "Now that we know how to calculate the minute hand angle and the hour hand angle, we can calculate the angle between the two hands.",
-    13: "The angle between the two hands can be calculated by subtracting one angle from another and taking the absolute value of the difference.\n Angle = abs(minute angle - hour angle)",
-    14: "Sometimes, this difference can be greater than 180 degrees. In that case, we can get the smaller angle between the two hands by subtracting this difference from 360 degrees\n Smaller Angle = 360 - Greater Angle",
-    15: "Congrats, you did it! Now you know how to solve this problem, feel free to play around with the clock and see if you can calculate the angle by yourself!"
+    5: "In short, the minute hand can be expressed as the formula below \n\n minute hand angle = 6 x minute", 
+    6: "Next, let's calculate the hour hand angle. We define the hour hand angle to be the angle between the hour hand and the 12 O'Clock mark.",
+    7: "This is actually a little trickier problem since while the hour hand moves as the hour changes, the hour hand also moves as each minute changes",
+    8: "This means that the hour hand angle is composed of 2 parts: the part that is moved by changes in hour and another part that is moved by changes in minutes",
+    9: "Now, let's calculate the part of the hour hand angle that is moved by changes in hour. Since there are 12 hours in one cycle of the clock, each hour will move the hour hand by 360/12 or 30 degrees.  ",
+    10: "Then, let's calculate the part of the hour hand angle that is moved by changes in minutes. As we saw in previous step, one hour moves the hour hand by 30 degrees.",
+    11: "This also means that 60 minutes also moves the hour hand by 30 degrees. As a result, each minute will move the hour hand by 30/60 or 0.5 degrees.",
+    12: "In short, the hour hand can be expressed as the formula below \n\n hour hand angle = 30 x hour + 0.5 x minute ",
+    13: "Now that we know how to calculate the minute hand angle and the hour hand angle, we can calculate the angle between the two hands.",
+    14: "The angle between the two hands can be calculated by subtracting one angle from another and taking the absolute value of the difference.\n Angle = abs(minute angle - hour angle)",
+    15: "Sometimes, this difference can be greater than 180 degrees. In that case, we can get the smaller angle between the two hands by subtracting this difference from 360 degrees\n Smaller Angle = 360 - Greater Angle",
+    16: "Congrats, you did it! Now you know how to solve this problem, press 'NEXT' to play around with the clock and see if you can calculate the angle by yourself!",
+    17: ""
 };
 //-------------------- BEGIN OBJECTS ----------------------------------------- 
 var getUpdatedX = function(length, angle){
@@ -138,6 +123,7 @@ var updateTenthMin = function(direction){
         }
     }
     else{
+        println("Hey");
         if (stateMap.time.tenth_min === 0){
             stateMap.time.tenth_min = 5;
             updateHour(direction);
@@ -263,6 +249,8 @@ var tenth_min_up_button = new Button(220, 5, 40, 20, 'UP');
 var tenth_min_down_button = new Button(220, 75, 40, 20, 'DOWN');
 var oneth_min_up_button = new Button(270, 5, 40, 20, 'UP');
 var oneth_min_down_button = new Button(270, 75, 40, 20, 'DOWN');
+
+// Declare button instances for navigation
 var start_button = new Button(170, 350, 60, 30, 'START');
 var next_button = new Button(350, 290, 40, 100, 'NEXT'); 
 var prev_button = new Button(50, 290, 40, 100, 'PREV');
@@ -304,15 +292,27 @@ var handleClicks = function(){
             updateMinHand();
         }
         else if (isClickInButton(x, y, start_button)){
-            stateMap.current_step = 1;
+            if (stateMap.current_step === 0){
+                stateMap.current_step = 1;
+                stateMap.needReset = true;
+                stateMap.prev = 0;
+            }
         }
         else if (isClickInButton(x, y, next_button)){
-            stateMap.current_step += 1;   
+            if (stateMap.current_step <= 16){
+                stateMap.current_step += 1;   
+                stateMap.needReset = true;
+                stateMap.prev = 0;
+            }
         }
         else if (isClickInButton(x, y, prev_button)){
-            stateMap.current_step -= 1;   
+            if (stateMap.current_step >= 1){
+                stateMap.current_step -= 1;   
+                stateMap.needReset = true;
+                stateMap.prev = 0;
+            }
         }
-        stateMap.needReset = true;
+        
     };
 };
 
@@ -520,10 +520,6 @@ var drawClock = function(){
     ClockHourHand();
     ClockMinHand();
     ClockMarks();
-    // ClockHourArc();
-    // ClockMinArc();
-    // ClockDiffArc();
-    // ClockDottedLine();
 };
 
 var drawTable = function(){
@@ -578,8 +574,12 @@ var drawTutorial = function(){
   fillColor("white");
   rect(50, 290, 340, 100, 5);
   
-  fillColor("green");
-  next_button.draw();
+  if (stateMap.current_step <= 16){
+    fillColor("green");
+    next_button.draw();
+  }
+  fillColor("red");
+  prev_button.draw();
   
   fillColor("black");
   textAlign(LEFT, CENTER);
@@ -608,147 +608,151 @@ var spinClock = function(unit, interval){
 
 var handleInteraction = function(){
     ClockDottedLine();
-    if (stateMap.current_step === 1 && stateMap.needReset.step_1){
-        setTime(0, 0, 0);
-        updateMinHand();
-        stateMap.needReset.step_1 = false;
-    } 
+    if (stateMap.current_step === 1){
+        if (stateMap.needReset){
+            setTime(0, 0, 0);
+            updateMinHand();
+            stateMap.needReset = false;     
+        }
+    }
     else if (stateMap.current_step === 2){
-        stateMap.prev = 0;
-        setTime(1, 3, 0);
-        updateMinHand();
+        if (stateMap.needReset){
+            setTime(1, 3, 0);
+            updateMinHand();
+            stateMap.needReset = false;
+        }
         ClockMinArc();
     }
     else if (stateMap.current_step === 3){
         spinClock("oneth_min", 250);
-        ClockMinArc();
+        ClockMinArc(); 
     }
     else if (stateMap.current_step === 4){
-        if (stateMap.needReset.step_4){ 
+        if (stateMap.needReset){ 
             setTime(1, 3, 0);
-            stateMap.needReset.step_4 = false;
+            stateMap.needReset = false;
         }
         updateMinHand();
         ClockMinArc();
     }
     else if (stateMap.current_step === 5){
-        if (stateMap.needReset.step_5){
+        ClockMinArc();   
+    }
+    else if (stateMap.current_step === 6){
+        if (stateMap.needReset){
             setTime(1, 3, 0);
-            stateMap.needReset.step_5 = false;
+            stateMap.needReset = false;
         }
         ClockHourArc();
     }
-    else if (stateMap.current_step === 6){
-        if (stateMap.needReset.step_6){
+    else if (stateMap.current_step === 7){
+        if (stateMap.needReset){
             setTime(1, 3, 0);
-            stateMap.needReset.step_6 = false;
+            stateMap.needReset = false;
         }
         spinClock("oneth_min", 250);
         ClockHourArc();
     }
-    else if (stateMap.current_step === 7){
-        if (stateMap.needReset.step_7){
-            setTime(3, 3, 0);
+    else if (stateMap.current_step === 8){
+        if (stateMap.needReset){
+            setTime(1, 3, 0);
             updateMinHand();
-            stateMap.needReset.step_7 = false;
+            stateMap.needReset = false;
         }
         ClockSplitHourArc();
     }
-    else if (stateMap.current_step === 8){
+    else if (stateMap.current_step === 9){
         var x, y;
-        ClockSplitHourArc();
         spinClock("hour", 250);
+        ClockSplitHourArc();
         x = getUpdatedX(dim.hour_hand/2, stateMap.angle.hour_angle/2);
         y = getUpdatedY(dim.hour_hand/2, stateMap.angle.hour_angle/2);
         fillColor("dark_blue");
         text(stateMap.angle.hour_angle+"°", x, y, 30, 30);
     }
-    else if (stateMap.current_step === 9){
+    else if (stateMap.current_step === 10){
         var x, y, big_angle, small_angle;
-        if (stateMap.needReset.step_9){
-            setTime(3, 3, 0);
+        if (stateMap.needReset){
+            setTime(1, 3, 0);
             updateMinHand();
-            stateMap.needReset.step_9 = false;
+            stateMap.needReset = false;
         }
         ClockSplitHourArc();
         x = getUpdatedX(dim.hour_hand/2, stateMap.angle.hour_angle);
         y = getUpdatedY(dim.hour_hand/2, stateMap.angle.hour_angle);
-        big_angle = (floor(stateMap.angle.hour_angle/30)*30);
+        big_angle = stateMap.time.hour*30;
         small_angle = stateMap.angle.hour_angle - big_angle;
         fillColor("light_blue");
         text(small_angle+"°", x, y, 30, 30);
     }
-    else if (stateMap.current_step === 10){
-        if (stateMap.needReset.step_10){
-            setTime(3, 3, 0);
+    else if (stateMap.current_step === 11){
+        if (stateMap.needReset){
+            setTime(1, 3, 0);
             updateMinHand();
-            stateMap.needReset.step_10 = false;
+            stateMap.needReset = false;
         }
         var small_angle, x, y;
-        small_angle = stateMap.angle.hour_angle - floor(stateMap.angle.hour_angle/30)*30;
-        ClockSplitHourArc();
         spinClock("oneth_min", 250);
+        ClockSplitHourArc();
         x = getUpdatedX(dim.hour_hand/2, stateMap.angle.hour_angle);
         y = getUpdatedY(dim.hour_hand/2, stateMap.angle.hour_angle);
+        small_angle = stateMap.angle.hour_angle - stateMap.time.hour*30;
         fillColor("light_blue");
         text(small_angle+"°", x, y, 30, 30);
     }
-    else if (stateMap.current_step === 11){
-        var x, y, big_x, big_y, big_angle, small_x, small_y, small_angle;
-        if (stateMap.needReset.step_11){
-            setTime(3, 3, 0);
+    else if (stateMap.current_step === 12){
+        var x, y;
+        if (stateMap.needReset){
+            setTime(1, 3, 0);
             updateMinHand();
-            stateMap.needReset.step_11 = false;
+            stateMap.needReset = false;
         }
         ClockSplitHourArc();
-        // big_angle = 30*stateMap.time.hour;
-        // big_x = getUpdatedX(dim.hour_hand/2, big_angle/2);
-        // big_y = getUpdatedY(dim.hour_hand/2, big_angle/2);
-        
-        // small_angle = stateMap.angle.hour_angle - big_angle;
-        // small_x = getUpdatedX(dim.hour_hand/2, big_angle);
-        // small_y = getUpdatedY(dim.hour_hand/2, big_angle);
-    
         x = getUpdatedX(dim.hour_hand, stateMap.angle.hour_angle/2);
         y = getUpdatedY(dim.hour_hand, stateMap.angle.hour_angle/2);
-        
-        
-        // fillColor("dark_blue");
-        // text(big_angle+"°", big_x, big_y, 30, 30);
-
-        // fillColor("light_blue");
-        // text(small_angle+"°", small_x, small_y, 30, 30);   
-        
         fillColor("blue");
         text(stateMap.angle.hour_angle+"°", x, y, 30, 30);
     }
-    else if (stateMap.current_step === 12){
-        if (stateMap.needReset.step_12){
-            setTime(3, 3, 0);
-            updateMinHand();
-            stateMap.needReset.step_12 = false;
-        }  
-        ClockHourArc();
-        ClockMinArc();
-        ClockDiffArc();
-    }
     else if (stateMap.current_step === 13){
-        if (stateMap.needReset.step_13){
+        if (stateMap.needReset){
             setTime(1, 3, 0);
             updateMinHand();
-            stateMap.needReset.step_13 = false;
+            stateMap.needReset = false;
         }  
         ClockHourArc();
         ClockMinArc();
         ClockDiffArc();
     }
     else if (stateMap.current_step === 14){
-        if (stateMap.needReset.step_14){
+        if (stateMap.needReset){
+            setTime(1, 3, 0);
+            updateMinHand();
+            stateMap.needReset = false;
+        }  
+        ClockHourArc();
+        ClockMinArc();
+        ClockDiffArc();
+    }
+    else if (stateMap.current_step === 15){
+        if (stateMap.needReset){
             setTime(1, 5, 0);
             updateMinHand();
-            stateMap.needReset.step_14 = false;
+            stateMap.needReset = false;
         }  
         ClockDiffArc();
+    }
+    else if (stateMap.current_step === 16){
+    }
+    else if (stateMap.current_step === 17){
+        if (stateMap.needReset){
+            setTime(0, 0, 0);
+            updateMinHand();
+            stateMap.needReset = false;
+        }  
+        ClockHourArc();
+        ClockMinArc();  
+        ClockDiffArc();  
+        drawAnswer();
     }
 };
 //-------------------- BEGIN MAIN DRAW FUNCTION ------------------------------
@@ -757,7 +761,6 @@ var draw = function() {
     strokeWeight(1);
     drawClock();
     handleClicks();
-    
     if (stateMap.current_step === 0){
         drawMenuPage();
         spinClock("oneth_min", 10);
