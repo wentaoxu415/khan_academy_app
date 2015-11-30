@@ -1,4 +1,9 @@
-
+/*
+Title: Clock Angle Problem
+Author: Wentao Xu
+Description: Clock angle problem is a problem that asks you to find the angle between the two hands of a clock. This progam helps to understand how to calculate the angle between the two hands of a clock.
+How It Works: There are two modes in this progam. There is a tutorial mode that guides you through the entire calculatinon process set with clear animations and explanations. Another mode is the challenges mode that allows to you generate a new problem for you to figure out and interact with the clock. Let's see how good you can get with this problem! 
+*/
 
 //-------------------- BEGIN OBJECTS -----------------------------------------
 // dim object stores the values of element's dimensiom
@@ -12,9 +17,14 @@ var dim = {
 };
 
 var stateMap = {
+    // Stores user's progress in tutorial
     "current_step": 0,
-    "prev": 0,
-    "needReset": true,
+    // Stores the previous time to help spinClock() function work 
+    "prev_time": 0,
+    // Serves as a flag to see the need for clock reset
+    "need_reset": true,
+    // Stores the difficulty level of the problem
+    "difficulty_level": "easy",
     // time object stores the value of the user provided time
     "time": {
         "hour": 6,
@@ -28,12 +38,21 @@ var stateMap = {
         "min_x": dim.center_x,
         "min_y": dim.center_y - dim.min_hand    
     },
+    // angle object stores the angle of each clock's hand 
     "angle":{
         "hour_angle": 180,
         "min_angle": 0
+    },
+    // show objects stores the flag that determines whether to show angles and
+    // buttons in the last step of tutorial 
+    "show":{
+        "hour_angle": false,
+        "min_angle": false,
+        "answer": false
     }
 };
 
+// message_object stores the messages for each step of the tutorial
 var message_object = {
     1: "This tutorial will help you understand how to calculate the angles between the hands of a clock. Let's start our journey!",
     2: "First, let's calculate the minute hand angle. We define the minute hand angle to be the angle between the minute hand and the 12 O'Clock mark.",
@@ -53,7 +72,7 @@ var message_object = {
     16: "Congrats, you did it! Now you know how to solve this problem, press 'NEXT' to play around with the clock and see if you can calculate the angle by yourself!",
     17: ""
 };
-//-------------------- BEGIN OBJECTS ----------------------------------------- 
+//-------------------- BEGIN HELPER FUNCTIONS -------------------------------- 
 var getUpdatedX = function(length, angle){
     return dim.center_x + sin(angle)*length;
 };
@@ -123,13 +142,13 @@ var updateTenthMin = function(direction){
         }
     }
     else{
-        println("Hey");
         if (stateMap.time.tenth_min === 0){
             stateMap.time.tenth_min = 5;
             updateHour(direction);
         }
         else{
-            stateMap.tenth_min -= 1;
+
+            stateMap.time.tenth_min -= 1;
         }
     }    
 };
@@ -169,10 +188,59 @@ var updateTime = function(time_unit, direction){
     }
 };
 
-var setTime = function(hour, tenth_min, oneth_min){
-    stateMap.time.hour = hour;
-    stateMap.time.tenth_min = tenth_min;
-    stateMap.time.oneth_min = oneth_min;
+var resetTime = function(hour, tenth_min, oneth_min){
+    if (stateMap.need_reset === true){
+        stateMap.time.hour = hour;
+        stateMap.time.tenth_min = tenth_min;
+        stateMap.time.oneth_min = oneth_min;
+        updateMinHand();
+        stateMap.need_reset = false;
+    }
+};
+
+// spinClock() shows the clock spinning based on given unit and interval
+// Input: unit = oneth_min, tenth_min, hour; interval = time in milliseconds
+var spinClock = function(unit, interval){
+    var current_time;
+    current_time = floor(millis()/interval);
+    if (current_time > (stateMap.prev_time + 1)){
+        stateMap.prev_time = current_time;
+        updateTime(unit, "UP");
+        updateMinHand();
+    }
+};
+
+var getNewTime = function(){
+    var part, hour, min, rounded_min, tenth_min, oneth_min;
+    if (stateMap.difficulty_level === "easy"){
+        part = round(random(0, 1)); 
+        if (part === 0){ //Change the hour hand
+            hour = round(random(0, 11));
+            resetTime(hour, 0, 0);
+        }
+        else{ //Change the minute hand
+            min = round(random(0, 59.99));
+            rounded_min = floor(min/5)*5;
+            tenth_min = floor((rounded_min/10));
+            oneth_min = rounded_min - tenth_min*10;
+            resetTime(0, tenth_min, oneth_min);
+        }
+    } 
+    else if (stateMap.difficulty_level === "medium"){
+        hour = round(random(0, 11));
+        min = round(random(0, 59.99));
+        rounded_min = floor(min/5)*5;
+        tenth_min = floor((rounded_min/10));
+        oneth_min = rounded_min - tenth_min*10;
+        resetTime(hour, tenth_min, oneth_min);
+    }
+    else if (stateMap.difficulty_level === "hard"){
+        hour = round(random(0, 11));
+        min = round(random(0, 59.99));
+        tenth_min = floor((min/10));
+        oneth_min = min - tenth_min*10;
+        resetTime(hour, tenth_min, oneth_min);
+    }
 };
 
 var fillColor = function(color){
@@ -187,6 +255,8 @@ var fillColor = function(color){
             return fill(150, 200, 255);
         case "red": 
             return fill(255, 0, 0);    
+        case "yellow":
+            return fill(255, 200, 0);
         case "white":
             return fill(255, 255, 255);
         case "black":
@@ -243,19 +313,33 @@ Button.prototype.draw = function() {
 };
 
 // Declare button instances for time update
-var hour_up_button = new Button(90, 5, 90, 20, 'UP');
-var hour_down_button = new Button(90, 75, 90, 20, 'DOWN');
-var tenth_min_up_button = new Button(220, 5, 40, 20, 'UP');
-var tenth_min_down_button = new Button(220, 75, 40, 20, 'DOWN');
-var oneth_min_up_button = new Button(270, 5, 40, 20, 'UP');
-var oneth_min_down_button = new Button(270, 75, 40, 20, 'DOWN');
+var hour_up_button = new Button(90, 5, 90, 20, "UP");
+var hour_down_button = new Button(90, 75, 90, 20, "DOWN");
+var tenth_min_up_button = new Button(220, 5, 40, 20, "UP");
+var tenth_min_down_button = new Button(220, 75, 40, 20, "DOWN");
+var oneth_min_up_button = new Button(270, 5, 40, 20, "UP");
+var oneth_min_down_button = new Button(270, 75, 40, 20, "DOWN");
 
 // Declare button instances for navigation
-var start_button = new Button(170, 350, 60, 30, 'START');
-var next_button = new Button(350, 290, 40, 100, 'NEXT'); 
-var prev_button = new Button(50, 290, 40, 100, 'PREV');
+var tutorial_button = new Button(160, 320, 80, 30, "TUTORIAL");
+var challenge_button = new Button(160, 360, 80, 30, "CHALLENGES");
+var next_button = new Button(350, 290, 40, 100, "NEXT"); 
+var prev_button = new Button(50, 290, 40, 100, "PREV");
 
-//--------------- BEGIN HELPER FUNCTIONS -------------------------------------
+// Declare button instances for hints and answers at the last slide
+var min_angle_button = new Button(10, 315, 70, 20, "Minute Angle");
+var hour_angle_button = new Button(10, 340, 70, 20, "Hour Angle");
+var answer_button = new Button(10, 365, 70, 20, "Answer");
+
+// Declare button instances for difficulty level
+var easy_button = new Button(10, 155, 60, 20, "Easy");
+var medium_button = new Button(10, 180, 60, 20, "Medium");
+var hard_button = new Button(10, 205, 60, 20, "Hard");
+
+// Declare button instance for a new problem
+var new_challenge_button = new Button(140, 285, 120, 20, "Display New Time");
+
+//--------------- BEGIN HELPER FUNCTIONS FOR BUTTON INTERACTION --------------
 var isClickInButton = function(x, y, button){
     if (x > button.x && x < (button.x + button.w) && y > button.y && y < (button.y + button.h)){
        return true; 
@@ -291,28 +375,69 @@ var handleClicks = function(){
             updateTime("oneth_min", "DOWN");
             updateMinHand();
         }
-        else if (isClickInButton(x, y, start_button)){
-            if (stateMap.current_step === 0){
-                stateMap.current_step = 1;
-                stateMap.needReset = true;
-                stateMap.prev = 0;
-            }
-        }
-        else if (isClickInButton(x, y, next_button)){
-            if (stateMap.current_step <= 16){
-                stateMap.current_step += 1;   
-                stateMap.needReset = true;
-                stateMap.prev = 0;
-            }
-        }
-        else if (isClickInButton(x, y, prev_button)){
-            if (stateMap.current_step >= 1){
-                stateMap.current_step -= 1;   
-                stateMap.needReset = true;
-                stateMap.prev = 0;
-            }
-        }
         
+        if (stateMap.current_step === 0){
+            if (isClickInButton(x, y, tutorial_button)){
+                stateMap.current_step = 1;
+                stateMap.need_reset = true;
+                stateMap.prev_time = 0;
+            }
+            else if (isClickInButton(x, y, challenge_button)){
+                stateMap.current_step = 17;
+                stateMap.need_reset = true;
+            }           
+        }
+        else if (stateMap.current_step >= 1 && stateMap.current_step <= 16){
+            if (isClickInButton(x, y, next_button)){
+                stateMap.current_step += 1;   
+                stateMap.need_reset = true;
+                stateMap.prev_time = 0;
+            }
+            else if (isClickInButton(x, y, prev_button)){
+                stateMap.current_step -= 1;   
+                stateMap.need_reset = true;
+                stateMap.prev_time = 0;
+            }   
+        }
+        else if (stateMap.current_step === 17){ 
+            if (isClickInButton(x, y, min_angle_button)){
+                if (stateMap.show.min_angle === true){
+                    stateMap.show.min_angle = false;
+                }
+                else{
+                    stateMap.show.min_angle = true;
+                }
+            }
+            else if (isClickInButton(x, y, hour_angle_button)){
+                if (stateMap.show.hour_angle === true){
+                        stateMap.show.hour_angle = false;
+                }
+                else{
+                        stateMap.show.hour_angle = true;
+                }
+            }
+            else if (isClickInButton(x, y, answer_button)){
+                if (stateMap.show.answer === true){
+                    stateMap.show.answer = false;
+                }
+                else{
+                    stateMap.show.answer = true;
+                }
+            }
+            else if (isClickInButton(x, y, easy_button)){
+                stateMap.difficulty_level = "easy";          
+            }
+            else if (isClickInButton(x, y, medium_button)){
+                stateMap.difficulty_level = "medium";          
+            }
+            else if (isClickInButton(x, y, hard_button)){
+                stateMap.difficulty_level = "hard";          
+            }
+            else if (isClickInButton(x, y, new_challenge_button)){
+                stateMap.need_reset = true;
+                getNewTime();
+            }
+        }
     };
 };
 
@@ -356,6 +481,38 @@ var TimeOnethMinText = function(){
 };
 
 //--------------- BEGIN CLOCK COMPONENTS -------------------------------------
+var ClockCenter = function(){
+    fillColor("black");
+    ellipse(dim.center_x, dim.center_y, 10, 10);    
+};
+
+var ClockFrame = function(){
+    stroke(0, 0, 0);
+    fillColor("white");
+    ellipse(dim.center_x, dim.center_y, dim.diameter, dim.diameter);       
+};
+
+var ClockMarks = function(){
+    var i, angle, x, y;
+    textSize(12);
+    textAlign(CENTER, CENTER);
+    for(i = 1; i <= 12; i++){
+        angle = (30*i) % 360;
+        x = getUpdatedX(dim.radius - 10, angle);
+        y = getUpdatedY(dim.radius - 10, angle);        
+        text(i, x, y);
+    }
+};
+
+var ClockDottedLine = function(){
+    var i;
+    strokeWeight(1);
+    stroke(0, 0, 0);
+    for (i = dim.center_y - dim.radius; i < dim.center_y; i+=2){
+        point(dim.center_x, i);
+    }
+};
+
 var ClockHourHand = function(){
     strokeWeight(5);
     line(dim.center_x, dim.center_y, stateMap.loc.hour_x, stateMap.loc.hour_y);
@@ -366,22 +523,7 @@ var ClockMinHand = function(){
     line(dim.center_x, dim.center_y, stateMap.loc.min_x, stateMap.loc.min_y);
 };
 
-var ClockSplitHourArc = function(){
-    var big_angle, small_angle, big_x, small_x, big_y, small_y;
-    strokeWeight(1);
-    noFill();
-    
-    big_angle = floor(stateMap.angle.hour_angle/30)*30;
-    small_angle = stateMap.angle.hour_angle - 90;
-    
-    strokeColor("dark_blue");
-    arc(dim.center_x, dim.center_y, dim.hour_hand, dim.hour_hand, -90, big_angle - 90);
-    
-    strokeColor("light_blue");
-    arc(dim.center_x, dim.center_y, dim.hour_hand, dim.hour_hand, big_angle - 90, small_angle);
-    
-};
-
+// ClockMinArc() displays the arc of the hour angle
 var ClockHourArc = function(){
     var angle, x, y;
     strokeWeight(1);
@@ -392,10 +534,12 @@ var ClockHourArc = function(){
     x = getUpdatedX(dim.hour_hand/2+10, stateMap.angle.hour_angle/2);
     y = getUpdatedY(dim.hour_hand/2+10, stateMap.angle.hour_angle/2);
     fillColor("blue");
+    textSize(10);
     textAlign(LEFT, TOP);
     text(stateMap.angle.hour_angle+"°", x, y, 30, 30);
 };
 
+// ClockMinArc() displays the arc of the minute angle
 var ClockMinArc = function(){
     var angle, x, y;
     strokeWeight(1);
@@ -407,14 +551,17 @@ var ClockMinArc = function(){
     x = getUpdatedX(dim.min_hand/2+10, stateMap.angle.min_angle/2);
     y = getUpdatedY(dim.min_hand/2+10, stateMap.angle.min_angle/2);
     fillColor("red");
+    textSize(10);
     textAlign(LEFT, TOP);
     text(stateMap.angle.min_angle+"°", x, y, 30, 30);
 };
 
+// ClockDiffArc() displays the arc of the angle between the clock's two hands
 var ClockDiffArc = function(){
-    var hour_angle, min_angle, initial_angle, final_angle, diff_angle, diff_text_angle,     complement_text_angle, x, y, complement_x, complement_y;
+    var hour_angle, min_angle, initial_angle, final_angle, diff_angle, diff_text_angle,     
+    complement_text_angle, x, y, complement_x, complement_y;
     strokeWeight(1);
-
+    textSize(10);
     noFill();
     hour_angle = stateMap.angle.hour_angle - 90;
     min_angle = stateMap.angle.min_angle - 90;
@@ -465,39 +612,51 @@ var ClockDiffArc = function(){
     
 };
 
-var ClockCenter = function(){
-    fillColor("black");
-    ellipse(dim.center_x, dim.center_y, 10, 10);    
-};
-
-var ClockFrame = function(){
-    stroke(0, 0, 0);
-    fillColor("white");
-    ellipse(dim.center_x, dim.center_y, dim.diameter, dim.diameter);       
-};
-
-var ClockMarks = function(){
-    var i, angle, x, y;
-    textSize(12);
-    textAlign(CENTER, CENTER);
-    for(i = 1; i <= 12; i++){
-        angle = (30*i) % 360;
-        x = getUpdatedX(dim.radius - 10, angle);
-        y = getUpdatedY(dim.radius - 10, angle);        
-        text(i, x, y);
-    }
-};
-
-var ClockDottedLine = function(){
-    var i;
+// ClockSplitHourArc() splits the hour arc into the part moved by changes in 
+// hour and another part moved by changes in minutes to enable easier 
+// explanation in the tutorial
+var ClockSplitHourArc = function(part){
+    var hour_part, hour_x, hour_y, min_part, min_x, min_y, x, y;
     strokeWeight(1);
-    stroke(0, 0, 0);
-    for (i = dim.center_y - dim.radius; i < dim.center_y; i+=2){
-        point(dim.center_x, i);
+    noFill();
+    textSize(10);
+    hour_part = floor(stateMap.angle.hour_angle/30)*30;
+    min_part = stateMap.angle.hour_angle - 90;
+    
+    strokeColor("dark_blue");
+    arc(dim.center_x, dim.center_y, dim.hour_hand, dim.hour_hand, -90, hour_part - 90);
+    
+    strokeColor("light_blue");
+    arc(dim.center_x, dim.center_y, dim.hour_hand, dim.hour_hand, hour_part - 90, min_part);
+    
+    hour_x = getUpdatedX(dim.hour_hand/2, stateMap.angle.hour_angle/2);
+    hour_y = getUpdatedY(dim.hour_hand/2, stateMap.angle.hour_angle/2);
+    hour_part = stateMap.time.hour*30;
+
+    min_x = getUpdatedX(dim.hour_hand/2, stateMap.angle.hour_angle);
+    min_y = getUpdatedY(dim.hour_hand/2, stateMap.angle.hour_angle);
+    min_part = stateMap.angle.hour_angle - hour_part;
+
+    x = getUpdatedX(dim.hour_hand, stateMap.angle.hour_angle/2);
+    y = getUpdatedY(dim.hour_hand, stateMap.angle.hour_angle/2);
+    
+    if (part === "hour_part"){
+        fillColor("dark_blue");
+        text(hour_part+"°", hour_x, hour_y, 30, 30);
     }
+    else if (part === "min_part"){
+        fillColor("light_blue");
+        text(min_part+"°", hour_x, hour_y, 30, 30);   
+    }
+    else if (part === "both"){
+        fillColor("blue");
+        text(stateMap.angle.hour_angle+"°", x, y, 30, 30);
+    }
+
 };
 
 //-------------------- BEGIN HELPER DRAW FUNCTION ----------------------------
+// drawControl() draws the clock control by getting all the necessary components
 var drawControl = function(){
     strokeColor("black");
     TimeBoxes();
@@ -514,6 +673,42 @@ var drawControl = function(){
     oneth_min_down_button.draw();
 };
 
+var drawLevels = function(){
+    
+
+    rect(10, 120, 75, 30, 5);
+    rect(10, 260, 75, 50, 5);
+
+    textSize(10);
+    textAlign(LEFT, CENTER);
+    
+    fillColor("black");
+    text("Get your hints and answer here", 15, 260, 65, 50);
+    text("Select the difficulty level", 15, 120, 65, 30);
+
+    fillColor("gray");
+    if (stateMap.difficulty_level === "easy"){
+        fillColor("green");    
+    }
+    easy_button.draw();
+    
+    fillColor("gray");
+    if (stateMap.difficulty_level === "medium"){
+        fillColor("yellow");
+    }
+    medium_button.draw();
+    
+    fillColor("gray");
+    if (stateMap.difficulty_level === "hard"){
+        fillColor("red");
+    }
+    hard_button.draw();
+
+    fillColor("blue");
+    new_challenge_button.draw();
+
+};
+// drawClock() draws the clock by getting all the necessary components
 var drawClock = function(){
     ClockFrame();
     ClockCenter();
@@ -522,105 +717,117 @@ var drawClock = function(){
     ClockMarks();
 };
 
-var drawTable = function(){
-    fill(255, 0, 0);
-    rect(30, 320, 100, 20);
-    
-    fill(0, 34, 255);
-    rect(30, 340, 100, 20);  
-    
-    fill(0, 255, 242);
-    rect(30, 360, 100, 20);  
-    
-    fill(255, 255, 255);
-    rect(130, 320, 250, 20);
-    rect(130, 340, 250, 20);
-    rect(130, 360, 250, 20);    
-    
-    fill(255, 255, 255);
-    textSize(10);
-    textAlign(LEFT, CENTER);
-    text(" Minute Angle", 30, 320, 70, 20);
-    text(" Hour Angle", 30, 340, 70, 20);
-    textSize(8);
-    text(" Angle in Between", 30, 360, 70, 20);
-};
-
+// drawEquation() displays equations for hints and answers on the tutorial's 
+// last step
 var drawEquation = function(){
     var min, min_angle, hour, hour_angle, diff;
+    
     min = stateMap.time.tenth_min*10+stateMap.time.oneth_min;
     min_angle = stateMap.angle.min_angle;
     hour = stateMap.time.hour;
     hour_angle = stateMap.angle.hour_angle;
     diff = abs(min_angle - hour_angle);
+    
     fillColor("black");
     textSize(10);
     textAlign(LEFT, CENTER);
-
-    text(" 6° x " + min + " minutes = " + min_angle+"°", 130, 320, 250, 20);  
-    text(" 30° x " + hour + " hours + 0.5° x " + min + " minutes = " + hour_angle +"°", 130, 340, 250, 20);    
-    text(" |"+ min_angle + "° - " + hour_angle+ "°| = " + diff + "°", 130, 360, 250, 20);
+    if (stateMap.show.min_angle === true){
+        text(" 6° x " + min + " minutes = " + min_angle+"°", 90, 315, 290, 20);  
+    }
+    if (stateMap.show.hour_angle === true){
+        text(" 30° x " + hour + " hours + 0.5° x " + min + " minutes = " + hour_angle +"°", 90, 340, 290, 20);    
+    }
+    if (stateMap.show.answer === true){    
+        text(" |"+ min_angle + "° - " + hour_angle+ "°| = " + diff + "°", 90, 365, 290, 20);
+    }
 };
 
+// drawAnswer() displays the buttons that enable the user to get hints and 
+// answer on the tutorial's last step
 var drawAnswer = function(){
-    drawTable();
     drawEquation();
+    fillColor("black");
+    textSize(14);
+    strokeColor("black");
+    
+    // Minute angle button
+    fillColor("gray");
+    if (stateMap.show.min_angle === true){
+        fillColor("red");
+        ClockMinArc();  
+    }
+    strokeColor("black");
+    min_angle_button.draw();
+    
+    // Hour angle button
+    fillColor("gray");
+    if (stateMap.show.hour_angle === true){
+        fillColor("blue");
+        ClockHourArc();
+    }
+    strokeColor("black");
+    hour_angle_button.draw();
+    
+    // Answer button
+    fillColor("gray");
+    if (stateMap.show.answer === true){
+        fillColor("green");
+        ClockDiffArc();
+    }
+    strokeColor("black");
+    answer_button.draw();
+
 };
 
+// drawTutorial() displays the message box where the tutorial messages will go
 var drawTutorial = function(){
+  // avatar to cheer up the user! 
   image(getImage("avatars/mr-pants-with-hat"), 5, 350, 30, 30);
   
+  // message box
+  strokeWeight(1);
   strokeColor("black");
   fillColor("white");
   rect(50, 290, 340, 100, 5);
   
+  // next button
   if (stateMap.current_step <= 16){
     fillColor("green");
     next_button.draw();
   }
+  
+  // previous button
   fillColor("red");
   prev_button.draw();
   
+  // messages
   fillColor("black");
   textAlign(LEFT, CENTER);
   textSize(12);
   text(message_object[stateMap.current_step], 100, 290, 250, 80);
 };
 
+// drawMenuPage() displays the menu page when stateMap.current_step = 0
 var drawMenuPage = function(){
     textSize(30);
     text("Clock Angle Problem", 10, 10, 380, 60); 
     textSize(14);
-    text("Can you find the angle between the two hands of a clock?", 10, 280, 380, 60); 
+    text("Can you find the angle between the two hands of a clock?", 10, 270, 380, 60); 
     fillColor("blue");
-    start_button.draw();
+    tutorial_button.draw();
+    fillColor("green");
+    challenge_button.draw();
 };
 
-var spinClock = function(unit, interval){
-    var current_time;
-    current_time = floor(millis()/interval);
-    if (current_time > (stateMap.prev + 1)){
-        stateMap.prev = current_time;
-        updateTime(unit, "UP");
-        updateMinHand();
-    }
-};
-
+// handleInteraction() controls which components to display based on user's 
+// progress
 var handleInteraction = function(){
     ClockDottedLine();
     if (stateMap.current_step === 1){
-        if (stateMap.needReset){
-            setTime(0, 0, 0);
-            updateMinHand();
-            stateMap.needReset = false;     
-        }
+        resetTime(0, 0, 0);
     }
     else if (stateMap.current_step === 2){
-        if (stateMap.needReset){
-            setTime(1, 3, 0);
-            updateMinHand();
-            stateMap.needReset = false;
-        }
+        resetTime(1, 3, 0);        
         ClockMinArc();
     }
     else if (stateMap.current_step === 3){
@@ -628,134 +835,72 @@ var handleInteraction = function(){
         ClockMinArc(); 
     }
     else if (stateMap.current_step === 4){
-        if (stateMap.needReset){ 
-            setTime(1, 3, 0);
-            stateMap.needReset = false;
-        }
-        updateMinHand();
+        resetTime(1, 3, 0);        
         ClockMinArc();
     }
     else if (stateMap.current_step === 5){
         ClockMinArc();   
     }
     else if (stateMap.current_step === 6){
-        if (stateMap.needReset){
-            setTime(1, 3, 0);
-            stateMap.needReset = false;
-        }
+        resetTime(1, 3, 0);        
         ClockHourArc();
     }
     else if (stateMap.current_step === 7){
-        if (stateMap.needReset){
-            setTime(1, 3, 0);
-            stateMap.needReset = false;
-        }
+        resetTime(1, 3, 0);        
         spinClock("oneth_min", 250);
         ClockHourArc();
     }
     else if (stateMap.current_step === 8){
-        if (stateMap.needReset){
-            setTime(1, 3, 0);
-            updateMinHand();
-            stateMap.needReset = false;
-        }
-        ClockSplitHourArc();
+        resetTime(1, 3, 0);        
+        ClockSplitHourArc("none");
     }
     else if (stateMap.current_step === 9){
         var x, y;
         spinClock("hour", 250);
-        ClockSplitHourArc();
-        x = getUpdatedX(dim.hour_hand/2, stateMap.angle.hour_angle/2);
-        y = getUpdatedY(dim.hour_hand/2, stateMap.angle.hour_angle/2);
-        fillColor("dark_blue");
-        text(stateMap.angle.hour_angle+"°", x, y, 30, 30);
+        ClockSplitHourArc("hour_part");
     }
     else if (stateMap.current_step === 10){
         var x, y, big_angle, small_angle;
-        if (stateMap.needReset){
-            setTime(1, 3, 0);
-            updateMinHand();
-            stateMap.needReset = false;
-        }
-        ClockSplitHourArc();
-        x = getUpdatedX(dim.hour_hand/2, stateMap.angle.hour_angle);
-        y = getUpdatedY(dim.hour_hand/2, stateMap.angle.hour_angle);
-        big_angle = stateMap.time.hour*30;
-        small_angle = stateMap.angle.hour_angle - big_angle;
-        fillColor("light_blue");
-        text(small_angle+"°", x, y, 30, 30);
+        resetTime(1, 3, 0);        
+        ClockSplitHourArc("min_part");
     }
     else if (stateMap.current_step === 11){
-        if (stateMap.needReset){
-            setTime(1, 3, 0);
-            updateMinHand();
-            stateMap.needReset = false;
-        }
+        resetTime(1, 3, 0);        
         var small_angle, x, y;
         spinClock("oneth_min", 250);
-        ClockSplitHourArc();
-        x = getUpdatedX(dim.hour_hand/2, stateMap.angle.hour_angle);
-        y = getUpdatedY(dim.hour_hand/2, stateMap.angle.hour_angle);
-        small_angle = stateMap.angle.hour_angle - stateMap.time.hour*30;
-        fillColor("light_blue");
-        text(small_angle+"°", x, y, 30, 30);
+        ClockSplitHourArc("min_part");
     }
     else if (stateMap.current_step === 12){
         var x, y;
-        if (stateMap.needReset){
-            setTime(1, 3, 0);
-            updateMinHand();
-            stateMap.needReset = false;
-        }
-        ClockSplitHourArc();
-        x = getUpdatedX(dim.hour_hand, stateMap.angle.hour_angle/2);
-        y = getUpdatedY(dim.hour_hand, stateMap.angle.hour_angle/2);
-        fillColor("blue");
-        text(stateMap.angle.hour_angle+"°", x, y, 30, 30);
+        resetTime(1, 3, 0);        
+        ClockSplitHourArc("both");
     }
     else if (stateMap.current_step === 13){
-        if (stateMap.needReset){
-            setTime(1, 3, 0);
-            updateMinHand();
-            stateMap.needReset = false;
-        }  
+        resetTime(1, 3, 0);        
         ClockHourArc();
         ClockMinArc();
         ClockDiffArc();
     }
     else if (stateMap.current_step === 14){
-        if (stateMap.needReset){
-            setTime(1, 3, 0);
-            updateMinHand();
-            stateMap.needReset = false;
-        }  
+        resetTime(1, 3, 0);        
         ClockHourArc();
         ClockMinArc();
         ClockDiffArc();
     }
     else if (stateMap.current_step === 15){
-        if (stateMap.needReset){
-            setTime(1, 5, 0);
-            updateMinHand();
-            stateMap.needReset = false;
-        }  
+        resetTime(1, 5, 0);        
         ClockDiffArc();
     }
     else if (stateMap.current_step === 16){
     }
     else if (stateMap.current_step === 17){
-        if (stateMap.needReset){
-            setTime(0, 0, 0);
-            updateMinHand();
-            stateMap.needReset = false;
-        }  
-        ClockHourArc();
-        ClockMinArc();  
-        ClockDiffArc();  
+        resetTime(0, 0, 0);        
+        drawLevels();
         drawAnswer();
     }
 };
 //-------------------- BEGIN MAIN DRAW FUNCTION ------------------------------
+// draw() calls all the functions necessary to start this program
 var draw = function() {
     background(255, 255, 255);
     strokeWeight(1);
@@ -766,8 +911,10 @@ var draw = function() {
         spinClock("oneth_min", 10);
     }
     else{
-        handleInteraction();
+        if (stateMap.current_step <= 16){
+            drawTutorial();    
+        }
         drawControl();
-        drawTutorial();
+        handleInteraction();
     }
 };
